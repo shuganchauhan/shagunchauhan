@@ -1,22 +1,27 @@
-# shagunchauhan
-# About Me 👋
+# Hi, I'm Shagun 👋
 
-Hi, I'm Shagun!
-<img src="mera.jpg" alt="my photo"
-[!personality]
-https://media.giphy.com/media/v1.Y2lkPTc5MGI3NjExMzJjdmN5MGxqNXljYTZoa25pbnhwNXB4OGc0Y2w1ZG8zNjB6dDR4ayZlcD12MV9naWZzX3NlYXJjaCZjdD1n/FiBzv5FRE85PO/giphy.gif
+![Profile Photo](mera.jpg)
 
+## About Me
+- 👨‍🎓 First Year B.Tech CS AI/ML student at Newton School of Technology  
+- 💻 Skills: Python, HTML, CSS  
+- 🏆 Participated in Smart India Hackathon (Project: SCAAP)  
+- 🎯 Passionate about learning new things  
+- 🎵 Hobbies: Gym, reading books, worshiping, listening to music  
+- 🦇 Fun: Huge Batman fan
 
-- 🎓 I’m currently learning **Web Development & Git/GitHub**
-- 💻 I enjoy working with **Python, HTML, CSS, and JavaScript**
-- 🚀 My goal is to contribute to **open-source projects**
-- 📫 How to reach me: [Emai:-shagun.c25418@nst.rishihood.in]
-- visit my likdin-->https://www.linkedin.com/in/shagun-chauhan-58b34a378?utm_source=share&utm_campaign=$
-- I am pretty good at team work(give me a chance to do with 
----
+## Connect with Me
+- [GitHub](https://github.com/shuganchauhan)  
+- [LinkedIn](https://www.linkedin.com/in/shagun-chauhan-58b34a378?utm_source=share&utm_campaign=share_via&utm_content=profile&utm_medium=android_app)
 
-### My Hobbies 🌟
-- programming
-- 📖 Reading tech blogs
-- 🎮 Playing games
-- 🎵 Listening to music
+## Fun GIF
+![Batman GIF](https://media.giphy.com/media/3oEjI6SIIHBdRxXI40/giphy.gif)
+
+## GitHub Stats
+![Shagun's GitHub Stats](https://github-readme-stats.vercel.app/api?username=shuganchauhan&show_icons=true&theme=radical)
+
+## GitHub Streak
+![GitHub Streak](https://github-readme-streak-stats.herokuapp.com/?user=shuganchauhan)
+
+## Top Languages
+![Top Languages](https://github-readme-stats.vercel.app/api/top-langs/?username=shuganchauhan&layout=compact)
