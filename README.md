@@ -11,8 +11,7 @@ Hi, I'm Shagun!
 - 📫 How to reach me: [Emai:-shagun.c25418@nst.rishihood.in]
 - visit my likdin-->https://www.linkedin.com/in/shagun-chauhan-58b34a378?utm_source=share&utm_campaign=$
 - I am pretty good at team work(give me a chance to do with you
-- ![dekh bhai](https://media.giphy.com/media/v1.Y2lkPTc5MGI3NjExdDRzY2pza3J5MzBmOXFreWYxcG5rYmZwNGoxcm1$
-le or dekh(https://media.giphy.com/media/v1.Y2lkPTc5MGI3NjExdDRzY2pza3J5MzBmOXFreWYxcG5rYmZwNGoxcm1pdnN$
+- 
 ---
 
 ### My Hobbies 🌟
