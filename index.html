@@ -3,11 +3,12 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>AI PDF Summarizer</title>
-    <script src="https://cdn.tailwindcss.com"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.16.105/pdf.min.js"></script>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <title>Dynamic AI PDF Summarizer</title>
+    <!-- Tailwind CSS for styling --><script src="https://cdn.tailwindcss.com"></script>
+    <!-- PDF.js library to read PDF files --><script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.16.105/pdf.min.js"></script>
+    <!-- Google Fonts (Inter) --><link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
     <style>
+        /* --- Color & Style Variables --- */
         :root {
             --bg-gradient-light: linear-gradient(-45deg, #e0c3fc, #8ec5fc, #c3cfe2, #f5f7fa);
             --card-bg-light: rgba(255, 255, 255, 0.75);
@@ -19,6 +20,8 @@
             --header-gradient-light: linear-gradient(135deg, #667eea 0%, #764ba2 50%, #6B21A8 100%);
             --header-gradient-dark: linear-gradient(135deg, #8ec5fc 0%, #9333ea 100%);
         }
+        
+        /* --- Base Body & Theme Styles --- */
         body {
             font-family: 'Inter', sans-serif;
             background: var(--bg-gradient-light);
@@ -29,15 +32,19 @@
             animation: gradient-animation 15s ease infinite;
         }
         body.dark {
-            background: #0A0A0A;
+            background: #0A0A0A; /* Dark mode background */
             color: var(--text-color-dark);
             animation: none; /* Disable gradient animation in dark mode */
         }
+        
+        /* --- Day Mode Background Animation --- */
         @keyframes gradient-animation {
             0% { background-position: 0% 50%; }
             50% { background-position: 100% 50%; }
             100% { background-position: 0% 50%; }
         }
+        
+        /* --- Particle Canvas (Background) --- */
         #particle-canvas {
             position: fixed;
             top: 0;
@@ -46,9 +53,12 @@
             height: 100%;
             z-index: -1;
         }
+        
+        /* --- Glass Card Effect --- */
         .glass-card {
             background: var(--card-bg-light);
             backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px); /* Safari support */
             border: 1px solid var(--card-border-light);
             transition: background 0.5s ease, border-color 0.5s ease;
             z-index: 1;
@@ -57,6 +67,8 @@
             background: var(--card-bg-dark);
             border-color: var(--card-border-dark);
         }
+        
+        /* --- Button Styles --- */
         .btn-primary {
             background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
             transition: all 0.3s ease;
@@ -80,6 +92,8 @@
             transform: none;
             box-shadow: none;
         }
+        
+        /* --- Animated Gradient Title --- */
         .animated-gradient-text {
             background: var(--header-gradient-light);
             -webkit-background-clip: text;
@@ -98,6 +112,8 @@
             50% { background-position: 100% 50%; }
             100% { background-position: 0% 50%; }
         }
+        
+        /* --- Loader Animation --- */
         #loader {
             border: 4px solid rgba(243, 243, 243, 0.3);
             border-top: 4px solid #667eea;
@@ -110,6 +126,8 @@
             0% { transform: rotate(0deg); }
             100% { transform: rotate(360deg); }
         }
+        
+        /* --- File Upload Area --- */
         .file-drop-area {
             transition: background-color 0.2s ease-in-out, border-color 0.2s ease-in-out;
         }
@@ -117,39 +135,45 @@
             background-color: rgba(102, 126, 234, 0.1);
             border-color: #667eea;
         }
+        
+        /* --- Custom Scrollbar for Output --- */
         #summaryOutput::-webkit-scrollbar { width: 8px; }
         #summaryOutput::-webkit-scrollbar-track { background: rgba(0,0,0,0.1); border-radius: 10px; }
         #summaryOutput::-webkit-scrollbar-thumb { background: rgba(118, 75, 162, 0.5); border-radius: 10px; }
         #summaryOutput::-webkit-scrollbar-thumb:hover { background: rgba(118, 75, 162, 0.7); }
-        .theme-switch { position: absolute; top: 1.5rem; left: 1.5rem; z-index: 10; }
+        /* --- Theme Switcher Position --- */
+        .theme-switch { position: absolute; top: 1.5rem; right: 1.5rem; z-index: 10; } /* CHANGED: left to right */
+        
+        /* --- TTS Speaker Button Style --- */
         .speaker-btn.speaking svg {
             color: #34D399; /* Green when speaking */
         }
     </style>
 </head>
 <body class="p-4">
-    <canvas id="particle-canvas"></canvas>
+    <!-- Canvas for particle background --><canvas id="particle-canvas"></canvas>
 
-    <div class="theme-switch">
-        <button id="theme-toggle" class="p-2 rounded-full bg-white/30 dark:bg-slate-800/50 text-slate-600 dark:text-yellow-300 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
-            <svg id="theme-icon-sun" class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z"></path></svg>
-            <svg id="theme-icon-moon" class="w-6 h-6 hidden" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z"></path></svg>
+    <!-- Theme Switcher Button --><div class="theme-switch">
+        <button id="theme-toggle" class="p-2 rounded-full bg-white/30 dark:bg-slate-800/50 text-slate-600 dark:text-yellow-300 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500" title="Toggle theme">
+            <!-- Sun Icon (Light Mode) --><svg id="theme-icon-sun" class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z"></path></svg>
+            <!-- Moon Icon (Dark Mode) --><svg id="theme-icon-moon" class="w-6 h-6 hidden" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z"></path></svg>
         </button>
     </div>
 
-    <div class="min-h-screen flex items-center justify-center">
+    <!-- Main Content Wrapper --><div class="min-h-screen flex items-center justify-center">
         <div class="w-full max-w-4xl mx-auto">
-            <div class="text-center mb-8">
-                <h1 class="animated-gradient-text text-4xl md:text-5xl font-bold">Summarizer</h1>
+            
+            <!-- Header --><div class="text-center mb-8">
+                <h1 class="animated-gradient-text text-4xl md:text-5xl font-bold">Dynamic AI PDF Summarizer</h1>
                 <p class="mt-2">Upload your PDF and get a customized summary in seconds.</p>
             </div>
     
-            <div class="glass-card rounded-2xl shadow-2xl p-6 md:p-8">
-                <!-- File Input Section -->
-                <div id="upload-container">
+            <!-- Main Application Card --><div class="glass-card rounded-2xl shadow-2xl p-6 md:p-8">
+                
+                <!-- File Input Section --><div id="upload-container">
                     <label for="pdfUpload" class="file-drop-area flex justify-center w-full h-48 px-4 transition bg-white/50 dark:bg-slate-800/30 border-2 border-gray-300 dark:border-slate-600 border-dashed rounded-md appearance-none cursor-pointer hover:border-indigo-400 focus:outline-none">
                         <span class="flex flex-col items-center justify-center space-y-2 text-center">
-                            <svg xmlns="http://www.w3.org/2000/svg" class="w-12 h-12 text-gray-500 dark:text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5">
+                            <!-- Upload Icon --><svg xmlns="http://www.w3.org/2000/svg" class="w-12 h-12 text-gray-500 dark:text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5">
                                 <path stroke-linecap="round" stroke-linejoin="round" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" />
                             </svg>
                             <p class="text-lg font-medium text-gray-700 dark:text-gray-300">
@@ -159,20 +183,20 @@
                     </label>
                     <input type="file" id="pdfUpload" accept=".pdf" class="hidden">
                 </div>
-                <div id="file-info-container" class="hidden items-center justify-between w-full h-48 px-4 bg-indigo-50 dark:bg-slate-800 border-2 border-indigo-200 dark:border-indigo-500 rounded-md">
+                
+                <!-- File Info (After Upload) --><div id="file-info-container" class="hidden items-center justify-between w-full h-48 px-4 bg-indigo-50 dark:bg-slate-800 border-2 border-indigo-200 dark:border-indigo-500 rounded-md">
                     <div class="flex items-center space-x-3 overflow-hidden">
-                        <svg xmlns="http://www.w3.org/2000/svg" class="w-10 h-10 text-indigo-500 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                        <!-- File Icon --><svg xmlns="http://www.w3.org/2000/svg" class="w-10 h-10 text-indigo-500 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
                             <path stroke-linecap="round" stroke-linejoin="round" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
                         </svg>
-                        <p id="fileName" class="text-lg font-medium truncate"></p>
+                        <p id="fileName" class="text-lg font-medium truncate" title="Uploaded file name"></p>
                     </div>
-                    <button id="removeFileBtn" class="ml-4 flex-shrink-0 bg-red-500 hover:bg-red-600 text-white p-2 rounded-full transition">
+                    <!-- Remove File Button --><button id="removeFileBtn" class="ml-4 flex-shrink-0 bg-red-500 hover:bg-red-600 text-white p-2 rounded-full transition" title="Remove file">
                         <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16"><path d="M4.646 4.646a.5.5 0 0 1 .708 0L8 7.293l2.646-2.647a.5.5 0 0 1 .708.708L8.707 8l2.647 2.646a.5.5 0 0 1-.708.708L8 8.707l-2.646 2.647a.5.5 0 0 1-.708-.708L7.293 8 4.646 5.354a.5.5 0 0 1 0-.708z"/></svg>
                     </button>
                 </div>
                 
-                <!-- Controls Section -->
-                <div class="grid grid-cols-1 md:grid-cols-3 gap-6 my-6">
+                <!-- Controls Section (Dropdowns) --><div class="grid grid-cols-1 md:grid-cols-3 gap-6 my-6">
                      <div>
                         <label for="language" class="block text-sm font-medium mb-1">Language:</label>
                         <select id="language" class="w-full p-3 text-gray-800 dark:text-gray-200 bg-white/80 dark:bg-slate-700 border border-gray-300 dark:border-slate-600 rounded-lg shadow-sm focus:ring-2 focus:ring-indigo-500">
@@ -193,39 +217,59 @@
                     </div>
                 </div>
     
-                <!-- Action Buttons -->
-                <div class="text-center flex items-center justify-center space-x-4">
-                    <button id="listenPdfBtn" class="btn-secondary text-white font-bold p-3 rounded-full shadow-lg" disabled title="Listen to PDF Content">
+                <!-- Action Buttons --><div class="text-center flex items-center justify-center space-x-4">
+                    <!-- Listen to PDF Button --><button id="listenPdfBtn" class="speaker-btn btn-secondary text-white font-bold p-3 rounded-full shadow-lg" disabled title="Listen to PDF Content">
                          <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M15.536 8.464a5 5 0 010 7.072m2.828-9.9a9 9 0 010 12.728M5.586 15H4a1 1 0 01-1-1v-4a1 1 0 011-1h1.586l4.707-4.707C10.923 3.663 12 4.109 12 5v14c0 .891-1.077 1.337-1.707.707L5.586 15z" /></svg>
                     </button>
-                    <button id="summarizeBtn" class="btn-primary text-white font-bold py-3 px-8 rounded-full shadow-lg text-lg" disabled>
+                    <!-- Generate Summary Button --><button id="summarizeBtn" class="btn-primary text-white font-bold py-3 px-8 rounded-full shadow-lg text-lg" disabled>
                         Generate Summary
                     </button>
                 </div>
             </div>
     
-            <!-- Output Section -->
-            <div id="outputSection" class="mt-8 glass-card rounded-2xl shadow-2xl p-6 md:p-8 hidden">
+            <!-- Output Section --><div id="outputSection" class="mt-8 glass-card rounded-2xl shadow-2xl p-6 md:p-8 hidden">
                 <div class="flex justify-between items-center mb-4">
                     <h2 class="text-2xl font-bold">Your Summary</h2>
                     <div class="flex items-center space-x-2">
-                        <button id="listenSummaryBtn" class="speaker-btn text-gray-500 dark:text-gray-400 hover:text-indigo-600 dark:hover:text-indigo-400 transition hidden" title="Listen to Summary">
+                        <!-- Listen to Summary Button --><button id="listenSummaryBtn" class="speaker-btn text-gray-500 dark:text-gray-400 hover:text-indigo-600 dark:hover:text-indigo-400 transition hidden" title="Listen to Summary">
                             <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M15.536 8.464a5 5 0 010 7.072m2.828-9.9a9 9 0 010 12.728M5.586 15H4a1 1 0 01-1-1v-4a1 1 0 011-1h1.586l4.707-4.707C10.923 3.663 12 4.109 12 5v14c0 .891-1.077 1.337-1.707.707L5.586 15z" /></svg>
                         </button>
-                        <button id="copyBtn" class="text-gray-500 dark:text-gray-400 hover:text-indigo-600 dark:hover:text-indigo-400 transition" title="Copy to Clipboard">
+                        <!-- Copy to Clipboard Button --><button id="copyBtn" class="text-gray-500 dark:text-gray-400 hover:text-indigo-600 dark:hover:text-indigo-400 transition" title="Copy to Clipboard">
                              <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg>
                         </button>
                     </div>
                 </div>
-                <div id="loader" class="mx-auto hidden"></div>
-                <div id="summaryOutput" class="leading-relaxed max-h-[50vh] overflow-y-auto pr-2"></div>
-            </div>
+                <!-- Loader --><div id="loader" class="mx-auto hidden"></div>
+                <!-- Summary Output Area --><div id="summaryOutput" class="leading-relaxed max-h-[50vh] overflow-y-auto pr-2"></div>
+
+                <!-- --- NEW: Practice Questions Section --- --><div id="questionsSection" class="mt-6 hidden">
+                    <hr class="my-4 border-gray-300 dark:border-gray-600">
+                    <h3 class="text-xl font-semibold mb-3">Practice Questions</h3>
+                    <p class="mb-4 text-sm">Test your understanding of the document.</p>
+                    <div class="flex flex-col md:flex-row items-center space-y-4 md:space-y-0 md:space-x-4">
+                        <select id="questionType" class="w-full md:w-1/2 p-3 text-gray-800 dark:text-gray-200 bg-white/80 dark:bg-slate-700 border border-gray-300 dark:border-slate-600 rounded-lg shadow-sm focus:ring-2 focus:ring-indigo-500">
+                            <option>Objective (Multiple Choice)</option>
+                            <option>Subjective (Open-ended)</option>
+                        </select>
+                        <button id="getQuestionsBtn" class="btn-primary text-white font-bold py-3 px-6 rounded-full shadow-lg w-full md:w-auto">
+                            Get Questions
+                        </button>
+                    </div>
+                    <!-- Loader for questions --><div id="questionsLoader" class="mx-auto hidden mt-4">
+                        <div class="border: 4px solid rgba(243, 243, 243, 0.3); border-top: 4px solid #667eea; border-radius: 50%; width: 30px; height: 30px; animation: spin 1s linear infinite;"></div>
+                    </div>
+                    <!-- Output for questions --><div id="questionsOutput" class="mt-4 leading-relaxed max-h-[40vh] overflow-y-auto pr-2"></div>
+                </div>
+                <!-- --- End of Practice Questions Section --- --></div>
+            
         </div>
     </div>
 
-    <script>
+    <!-- Main JavaScript Logic --><script>
+        // Set workerSrc for PDF.js
         pdfjsLib.GlobalWorkerOptions.workerSrc = `https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.16.105/pdf.worker.min.js`;
 
+        // --- Get DOM Elements ---
         const summarizeBtn = document.getElementById('summarizeBtn');
         const pdfUpload = document.getElementById('pdfUpload');
         const fileNameDisplay = document.getElementById('fileName');
@@ -242,19 +286,33 @@
         const moonIcon = document.getElementById('theme-icon-moon');
         const listenPdfBtn = document.getElementById('listenPdfBtn');
         const listenSummaryBtn = document.getElementById('listenSummaryBtn');
+        // --- NEW: Question Section Elements ---
+        const questionsSection = document.getElementById('questionsSection');
+        const getQuestionsBtn = document.getElementById('getQuestionsBtn');
+        const questionType = document.getElementById('questionType');
+        const questionsLoader = document.getElementById('questionsLoader');
+        const questionsOutput = document.getElementById('questionsOutput');
 
         let uploadedFile = null;
         let fullPdfText = '';
 
-        // --- TTS Logic ---
+        // --- Text-to-Speech (TTS) Logic ---
         function speakText(text, buttonElement) {
+            // Stop any speaking audio
             if (speechSynthesis.speaking) {
                 speechSynthesis.cancel();
-                return;
+                // If the same button was clicked, just stop. Don't restart.
+                if (buttonElement.classList.contains('speaking')) {
+                    return; 
+                }
             }
             if (!text) return;
 
             const utterance = new SpeechSynthesisUtterance(text);
+            
+            // Clear 'speaking' class from all buttons
+            document.querySelectorAll('.speaker-btn').forEach(btn => btn.classList.remove('speaking'));
+
             utterance.onstart = () => {
                 buttonElement.classList.add('speaking');
             };
@@ -263,13 +321,13 @@
             };
             utterance.onerror = () => {
                 buttonElement.classList.remove('speaking');
+                console.error("Speech synthesis error");
             };
             speechSynthesis.speak(utterance);
         }
         
         listenPdfBtn.addEventListener('click', () => speakText(fullPdfText, listenPdfBtn));
         listenSummaryBtn.addEventListener('click', () => speakText(summaryOutput.innerText, listenSummaryBtn));
-
 
         // --- Theme Switcher Logic ---
         function applyTheme(theme) {
@@ -289,16 +347,29 @@
             const newTheme = isDark ? 'dark' : 'light';
             localStorage.setItem('theme', newTheme);
             applyTheme(newTheme);
-            // Re-initialize particles with new colors
-            initParticles();
+            // Re-initialize particles with new theme colors
+            if (window.initParticles) {
+                window.initParticles();
+            }
         });
 
-        // --- PDF Handling Logic ---
+        // --- PDF File Handling (Drag/Drop/Click) ---
         pdfUpload.addEventListener('change', (e) => handleFile(e.target.files[0]));
         removeFileBtn.addEventListener('click', removeFile);
-        ['dragenter', 'dragover', 'dragleave', 'drop'].forEach(eventName => dropArea.addEventListener(eventName, e => {e.preventDefault(); e.stopPropagation();}, false));
-        ['dragenter', 'dragover'].forEach(eventName => dropArea.addEventListener(eventName, () => dropArea.classList.add('dragover'), false));
-        ['dragleave', 'drop'].forEach(eventName => dropArea.addEventListener(eventName, () => dropArea.classList.remove('dragover'), false));
+        
+        // Add drag-and-drop event listeners
+        ['dragenter', 'dragover', 'dragleave', 'drop'].forEach(eventName => {
+            dropArea.addEventListener(eventName, e => {
+                e.preventDefault();
+                e.stopPropagation();
+            }, false);
+        });
+        ['dragenter', 'dragover'].forEach(eventName => {
+            dropArea.addEventListener(eventName, () => dropArea.classList.add('dragover'), false);
+        });
+        ['dragleave', 'drop'].forEach(eventName => {
+            dropArea.addEventListener(eventName, () => dropArea.classList.remove('dragover'), false);
+        });
         dropArea.addEventListener('drop', (e) => handleFile(e.dataTransfer.files[0]), false);
 
         function handleFile(file) {
@@ -308,16 +379,23 @@
                 uploadContainer.classList.add('hidden');
                 fileInfoContainer.classList.remove('hidden');
                 fileInfoContainer.classList.add('flex');
-                summarizeBtn.disabled = false;
-                listenPdfBtn.disabled = false;
+                
+                // Extract text immediately to enable the listen button
                 extractTextFromPdf(uploadedFile).then(text => {
                     fullPdfText = text;
+                    listenPdfBtn.disabled = false;
+                    summarizeBtn.disabled = false; // Enable summarize only after text is ready
                 }).catch(err => {
                     console.error("Failed to extract text on upload:", err);
                     fullPdfText = '';
                     listenPdfBtn.disabled = true;
+                    summarizeBtn.disabled = true;
+                    // Show error to user
+                    fileNameDisplay.textContent = "Error reading this PDF.";
                 });
-            } else { removeFile(); }
+            } else { 
+                removeFile(); 
+            }
         }
         
         function removeFile() {
@@ -331,36 +409,57 @@
             summarizeBtn.disabled = true;
             listenPdfBtn.disabled = true;
             outputSection.classList.add('hidden');
+            listenSummaryBtn.classList.add('hidden');
+            questionsSection.classList.add('hidden'); // <-- ADDED
+            questionsOutput.innerHTML = ''; // <-- ADDED
+            document.querySelectorAll('.speaker-btn').forEach(btn => btn.classList.remove('speaking'));
         }
 
+        // --- Main Summarize Button Action ---
         summarizeBtn.addEventListener('click', async () => {
             if (!fullPdfText) {
                 summaryOutput.innerHTML = `<span class="text-red-500">Error: Could not read the PDF text. Please try re-uploading the file.</span>`;
                 outputSection.classList.remove('hidden');
                 return;
             };
-            if (speechSynthesis.speaking) speechSynthesis.cancel();
+            if (speechSynthesis.speaking) speechSynthesis.cancel(); // Stop any previous speech
 
             outputSection.classList.remove('hidden');
             summaryOutput.innerHTML = '';
-            listenSummaryBtn.classList.add('hidden');
+            listenSummaryBtn.classList.add('hidden'); // Hide summary listen button
+            questionsSection.classList.add('hidden'); // <-- ADDED: Hide questions section on new summary
+            questionsOutput.innerHTML = ''; // <-- ADDED: Clear old questions
             loader.classList.remove('hidden');
             summarizeBtn.disabled = true;
-            listenPdfBtn.disabled = true;
+            listenPdfBtn.disabled = true; // Disable PDF listen button while processing
+            document.querySelectorAll('.speaker-btn').forEach(btn => btn.classList.remove('speaking'));
 
             try {
                 const prompt = createPrompt(fullPdfText);
-                await callGemini(prompt);
+                // --- REFACTORED: Call API and handle UI here ---
+                const generatedText = await callGeminiApi(prompt); // Use the new reusable function
+                
+                // Format the AI's response (Markdown to HTML)
+                let formattedText = generatedText
+                    .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>') // Bold
+                    .replace(/\*(.*?)\*/g, '<em>$1</em>')     // Italics
+                    .replace(/\n/g, '<br>');                      // Newlines
+                summaryOutput.innerHTML = formattedText;
+                listenSummaryBtn.classList.remove('hidden'); // Show the summary listen button
+                questionsSection.classList.remove('hidden'); // <-- ADDED: Show questions section
+
             } catch (error) {
                 console.error("Error processing PDF:", error);
-                summaryOutput.innerHTML = `<span class="text-red-500">Error: ${error.message}</span>`;
+                // Show user-friendly error
+                summaryOutput.innerHTML = `<span class="text-red-500"><b>Error:</b> ${error.message}<br><br>This can happen if the API key is invalid, disabled, or has reached its quota. Please check the browser console (F12) for more details.</span>`;
             } finally {
                 loader.classList.add('hidden');
                 summarizeBtn.disabled = false;
-                listenPdfBtn.disabled = false;
+                listenPdfBtn.disabled = false; // Re-enable PDF listen button
             }
         });
 
+        // --- PDF Text Extraction Function ---
         async function extractTextFromPdf(file) {
             const reader = new FileReader();
             return new Promise((resolve, reject) => {
@@ -380,26 +479,26 @@
                 reader.readAsArrayBuffer(file);
             });
         }
+        
+        // --- AI Prompt Creation Function ---
         function createPrompt(text) {
             const language = document.getElementById('language').value;
             const audience = document.getElementById('audience').value;
             const style = document.getElementById('style').value;
 
-    // --- NEW LOGIC FOR HINGLISH ---
-    // This variable will hold our specific language instruction.
+            // This variable will hold our specific language instruction.
             let languageInstruction;
 
             if (language === 'Hinglish') {
-        // If Hinglish is selected, we give the AI a very detailed instruction.
+                // If Hinglish is selected, give a detailed instruction.
                 languageInstruction = `Summarize the document in Hinglish. 
                 **Crucially, this means the output must be written using only the English alphabet.** The primary language should be simple English, but you should naturally mix in common Hindi words and phrases written in English letters (like 'matlab', 'bahut important', 'yeh topic hai') to make it sound like a modern, casual conversation. The vast majority of the summary must be in English.`;
             } else {
-        // For all other languages, the instruction remains simple.
+                // For all other languages, the instruction remains simple.
                 languageInstruction = `Summarize the document in ${language}.`;
             }
-    // --- END OF NEW LOGIC ---
 
-    // The rest of the prompt is assembled using our new, smarter instruction.
+            // Assemble the final prompt
             return `You are an expert summarizer. Analyze the following text extracted from a PDF document and perform the tasks below.
 
             **Document Text:**
@@ -413,53 +512,116 @@
             3. **Rewrite the entire output in a ${style} style.** If the style is "Text-to-Speech Friendly", ensure the text is broken into shorter, easy-to-read sentences and complex words are simplified.
 
             Please provide a single, coherent response that fulfills all these requirements. Structure the output with clear headings.`;
-}
+        }
 
 
-
+        // --- NEW: Question Prompt Creation Function ---
+        function createQuestionPrompt(pdfText, summaryText, qType) {
+            return `You are an AI teaching assistant. Your task is to generate practice questions based on a document.
             
-    // --- NEW LOGIC FOR HINGLISH ---
-    // This variable will hold our specific language instruction.
-     
+            You will be given the full text of a document and a summary of that document. Base your questions on the key topics identified in the summary, using the full text for detail.
+
+            **Full Document Text:**
+            ---
+            ${pdfText}
+            ---
+
+            **Summary of Key Topics:**
+            ---
+            ${summaryText}
+            ---
+
+            **Task:**
+            Generate a set of 5-7 practice questions of the following type: **${qType}**.
+            - If "Objective (Multiple Choice)", provide 4 options (A, B, C, D) for each question and clearly indicate the correct answer (e.g., "Answer: C").
+            - If "Subjective (Open-ended)", provide thought-provoking questions that require a 1-2 paragraph answer.
+
+            Format the output clearly.`;
+        }
 
 
-
-        
-        async function callGemini(prompt, retries = 3, delay = 1000) {
+        // --- REFACTORED: Generic Gemini API Call Function ---
+        async function callGeminiApi(prompt, retries = 3, delay = 1000) {
+            // This is the API key you provided in the last version of the code.
             const apiKey = "AIzaSyA_0rlp5l8ER3KYXYBkkGHWO2UsNYd3c9A";
             const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-09-2025:generateContent?key=${apiKey}`;
+            
             try {
-                const response = await fetch(apiUrl, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ contents: [{ parts: [{ text: prompt }] }] }) });
-                if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
+                const response = await fetch(apiUrl, { 
+                    method: 'POST', 
+                    headers: { 'Content-Type': 'application/json' }, 
+                    body: JSON.stringify({ contents: [{ parts: [{ text: prompt }] }] }) 
+                });
+                
+                if (!response.ok) {
+                    // Try to read the error message from Google's response
+                    const errorBody = await response.json();
+                    const errorMessage = errorBody?.error?.message || `HTTP error! status: ${response.status}`;
+                    throw new Error(errorMessage);
+                }
+                
                 const result = await response.json();
                 const generatedText = result.candidates?.[0]?.content?.parts?.[0]?.text;
+                
                 if (generatedText) {
-                    let formattedText = generatedText.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>').replace(/\n/g, '<br>');
-                    summaryOutput.innerHTML = formattedText;
-                    listenSummaryBtn.classList.remove('hidden'); // Show the listen button for the summary
+                    return generatedText; // Just return the text
                 } else {
-                    summaryOutput.textContent = 'Sorry, the AI returned an empty response.';
-                    listenSummaryBtn.classList.add('hidden');
+                    throw new Error("The AI returned an empty response.");
                 }
             } catch (error) {
                 console.error("Error calling Gemini API:", error);
                 if (retries > 0) {
+                    // Exponential backoff: Wait longer before retrying
                     await new Promise(res => setTimeout(res, delay));
-                    return callGemini(prompt, retries - 1, delay * 2);
+                    return callGeminiApi(prompt, retries - 1, delay * 2);
                 } else {
-                    summaryOutput.textContent = 'Failed to get summary after multiple attempts. Please try again later.';
+                    // Re-throw the error to be caught by the calling function
+                    throw new Error(`Failed to get response after multiple attempts: ${error.message}`);
                 }
             }
         }
         
+        // --- NEW: Event Listener for Get Questions Button ---
+        getQuestionsBtn.addEventListener('click', async () => {
+            if (speechSynthesis.speaking) speechSynthesis.cancel();
+            questionsLoader.classList.remove('hidden');
+            questionsOutput.innerHTML = '';
+            getQuestionsBtn.disabled = true;
+
+            try {
+                const summaryText = summaryOutput.innerText;
+                const qType = document.getElementById('questionType').value;
+                const questionPrompt = createQuestionPrompt(fullPdfText, summaryText, qType);
+                
+                const questionsText = await callGeminiApi(questionPrompt); // Reuse the API function
+                
+                let formattedQText = questionsText
+                    .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
+                    .replace(/\*(.*?)\*/g, '<em>$1</em>')
+                    .replace(/\n/g, '<br>');
+                questionsOutput.innerHTML = formattedQText;
+
+            } catch (error) {
+                console.error("Error getting questions:", error);
+                questionsOutput.innerHTML = `<span class="text-red-500"><b>Error:</b> ${error.message}</span>`;
+            } finally {
+                questionsLoader.classList.add('hidden');
+                getQuestionsBtn.disabled = false;
+            }
+        });
+
+
+        // --- Copy to Clipboard Button Logic ---
         copyBtn.addEventListener('click', () => {
-            const textToCopy = summaryOutput.innerText;
+            const textToCopy = summaryOutput.innerText; // Get text content, not HTML
             const textArea = document.createElement('textarea');
             textArea.value = textToCopy;
             document.body.appendChild(textArea);
             textArea.select();
-            document.execCommand('copy');
+            document.execCommand('copy'); // Use execCommand for broader compatibility
             document.body.removeChild(textArea);
+            
+            // Show "Copied" feedback
             const originalIcon = copyBtn.innerHTML;
             copyBtn.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="text-green-500"><polyline points="20 6 9 17 4 12"></polyline></svg>`;
             setTimeout(() => { copyBtn.innerHTML = originalIcon; }, 2000);
@@ -476,16 +638,20 @@
                 canvas.height = window.innerHeight;
             }
 
+            // Particle class
             class Particle {
                 constructor(x, y, directionX, directionY, size) {
                     this.x = x; this.y = y; this.directionX = directionX; this.directionY = directionY; this.size = size;
                 }
+                // Method to draw a particle
                 draw() {
                     ctx.beginPath();
                     ctx.arc(this.x, this.y, this.size, 0, Math.PI * 2, false);
+                    // Change color based on theme
                     ctx.fillStyle = document.body.classList.contains('dark') ? 'rgba(0, 255, 255, 1)' : 'rgba(55, 65, 81, 0.8)';
                     ctx.fill();
                 }
+                // Method to update particle position
                 update() {
                     if (this.x > canvas.width || this.x < 0) this.directionX = -this.directionX;
                     if (this.y > canvas.height || this.y < 0) this.directionY = -this.directionY;
@@ -494,6 +660,7 @@
                 }
             }
 
+            // Function to create particle array
             window.initParticles = function() {
                 particlesArray = [];
                 let numberOfParticles = (canvas.height * canvas.width) / 9000;
@@ -507,6 +674,7 @@
                 }
             }
 
+            // Function to draw lines connecting particles
             function connectParticles() {
                 let opacityValue = 1;
                 for (let a = 0; a < particlesArray.length; a++) {
@@ -515,6 +683,7 @@
                             ((particlesArray[a].y - particlesArray[b].y) * (particlesArray[a].y - particlesArray[b].y));
                         if (distance < (canvas.width / 7) * (canvas.height / 7)) {
                             opacityValue = 1 - (distance / 20000);
+                            // Change line color based on theme
                             const lineColor = document.body.classList.contains('dark') ? `rgba(0, 255, 255, ${opacityValue * 0.3})` : `rgba(55, 65, 81, ${opacityValue * 0.3})`;
                             ctx.strokeStyle = lineColor;
                             ctx.lineWidth = 1;
@@ -527,6 +696,7 @@
                 }
             }
 
+            // Animation loop
             function animateParticles() {
                 requestAnimationFrame(animateParticles);
                 ctx.clearRect(0, 0, innerWidth, innerHeight);
@@ -536,18 +706,27 @@
                 connectParticles();
             }
 
+            // Resize event listener
             window.addEventListener('resize', () => {
                 setCanvasSize();
                 initParticles();
             });
             
-            // Load initial theme and then start animation
+            // --- Initialize Theme and Particles on Load ---
+            // Load saved theme from localStorage
             const savedTheme = localStorage.getItem('theme');
+            // Check for system preference
             const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
-            if (savedTheme) applyTheme(savedTheme);
-            else if (prefersDark) applyTheme('dark');
-            else applyTheme('light');
             
+            if (savedTheme) {
+                applyTheme(savedTheme);
+            } else if (prefersDark) {
+                applyTheme('dark'); // Setting theme from system preference
+            } else {
+                applyTheme('light'); // Defaulting to light theme
+            }
+            
+            // Set canvas size, initialize particles, and start the animation
             setCanvasSize();
             initParticles();
             animateParticles();
